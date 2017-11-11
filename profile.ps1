@@ -1,82 +1,6 @@
-#poshgit colors referance https://github.com/dahlbyk/posh-git/blob/master/src/GitPrompt.ps1
-
-Import-Module posh-git
-$global:GitPromptSettings.DefaultPromptAbbreviateHomeDirectory = $true
-$global:GitPromptSettings.DefaultPromptSuffix = '`n$(''>'' * ($nestedPromptLevel + 1)) '
-$global:GitPromptSettings.BeforeText = '['
-$global:GitPromptSettings.AfterText  = '] '
-$global:GitPromptSettings.EnableFileStatus = $true
-
-# Background colors
-$GitPromptSettings.AfterBackgroundColor = "Black"
-$GitPromptSettings.AfterStashBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.BeforeBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.BeforeIndexBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.BeforeStashBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.BranchAheadStatusBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.BranchBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.BranchBehindAndAheadStatusBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.BranchBehindStatusBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.BranchIdenticalStatusToBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.DelimBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.IndexBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.LocalDefaultStatusBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.LocalStagedStatusBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.LocalWorkingStatusBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.StashBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-$GitPromptSettings.WorkingBackgroundColor = $GitPromptSettings.AfterBackgroundColor
-
-# Foreground colors
-$GitPromptSettings.BranchForegroundColor = [ConsoleColor]::DarkCyan
-$GitPromptSettings.BranchIdenticalStatusToForegroundColor = "White"
-$GitPromptSettings.DelimForegroundColor = "Blue"
-$GitPromptSettings.IndexForegroundColor = "Red"
-$GitPromptSettings.WorkingForegroundColor = "Yellow"
-$GitPromptSettings.BranchBehindStatusForegroundColor = [ConsoleColor]::Red
-$GitPromptSettings.BranchAheadStatusForegroundColor = [ConsoleColor]::Yellow
-
-# Prompt shape
-$GitPromptSettings.BranchIdenticalStatusToSymbol = ""
-$GitPromptSettings.DelimText = " ॥"
-$GitPromptSettings.LocalStagedStatusSymbol = ""
-$GitPromptSettings.LocalWorkingStatusSymbol = ""
-$GitPromptSettings.ShowStatusWhenZero = $false
-
-function prompt {
-    $origLastExitCode = $LASTEXITCODE
-    Write-VcsStatus
-
-    $curPath = $ExecutionContext.SessionState.Path.CurrentLocation.Path
-    if ($curPath.ToLower().StartsWith($Home.ToLower()))
-    {
-        $curPath = "~" + $curPath.SubString($Home.Length)
-    }
-
-    $maxPathLength = 40
-    if ($curPath.Length -gt $maxPathLength) {
-        $curPath = '...' + $curPath.SubString($curPath.Length - $maxPathLength + 3)
-    }
-
-    Write-Host $curPath -ForegroundColor DarkGreen
-
-    $txtRight = "$(get-date)"
-    $startposx = $Host.UI.RawUI.windowsize.width - $txtRight.length - 2
-    $startposy = $Host.UI.RawUI.CursorPosition.Y - 1
-    $Host.UI.RawUI.CursorPosition = New-Object System.Management.Automation.Host.Coordinates $startposx,$startposy
-    $host.UI.RawUI.ForegroundColor = "White"
-    $Host.UI.Write("[")
-    $host.UI.RawUI.ForegroundColor = "Cyan"
-    $Host.UI.Write($txtRight)
-    $host.UI.RawUI.ForegroundColor = "White"
-    $Host.UI.Write("]")
-
-
-
-    $LASTEXITCODE = $origLastExitCode
-    "$('>' * ($nestedPromptLevel + 1)) "
-}
-
-
+# ---------------------------------------------------------------------------
+# Banner
+# ---------------------------------------------------------------------------
 
 Write-Host @"
 __________                           _________.__           .__  .__
@@ -87,3 +11,160 @@ __________                           _________.__           .__  .__
                             \/             \/      \/     \/
 
 "@ -foregroundcolor "magenta"
+
+# ---------------------------------------------------------------------------
+# Settings
+# ---------------------------------------------------------------------------
+$MaximumHistoryCount = 512
+$FormatEnumerationLimit = 100
+
+# ---------------------------------------------------------------------------
+# Modules
+# ---------------------------------------------------------------------------
+
+# PSReadline provides Bash like keyboard cursor handling
+if ($host.Name -eq 'ConsoleHost')
+{
+	Import-Module PSReadline
+
+	Set-PSReadLineOption -MaximumHistoryCount 4000
+	Set-PSReadlineOption -ShowToolTips:$true
+
+	# With these bindings, up arrow/down arrow will work like
+	# PowerShell/cmd if the current command line is blank. If you've
+	# entered some text though, it will search the history for commands
+	# that start with the currently entered text.
+	Set-PSReadlineKeyHandler -Key UpArrow -Function HistorySearchBackward
+	Set-PSReadlineKeyHandler -Key DownArrow -Function HistorySearchForward
+
+	Set-PSReadlineKeyHandler -Key "Tab" -Function "MenuComplete"
+	Set-PSReadlineKeyHandler -Chord 'Shift+Tab' -Function "Complete"
+}
+
+# fzf is a fuzzy file finder, and will provide fuzzy location searching
+# when using Ctrl+T, and will provide better reverse command searching via
+# Ctrl-R.
+Import-Module PSFzf -ArgumentList 'Ctrl+T','Ctrl+R'
+
+# Git support
+Import-Module Git
+Initialize-Git
+Import-Module Posh-Git
+
+# Colorize directory output
+Import-Module PSColor
+
+# Utils
+Import-Module StreamUtils
+Import-Module StringUtils
+Import-Module Profile
+
+# ---------------------------------------------------------------------------
+# Custom Aliases
+# ---------------------------------------------------------------------------
+set-alias unset      remove-variable
+set-alias mo         measure-object
+set-alias eval       invoke-expression
+set-alias n          code
+set-alias vi         code
+
+# ---------------------------------------------------------------------------
+# Visuals
+# ---------------------------------------------------------------------------
+set-variable -Scope Global WindowTitle ''
+
+function prompt
+{
+	$local:pathObj = (get-location)
+	$local:path    = $pathObj.Path
+	$local:drive   = $pathObj.Drive.Name
+
+	if(!$drive) # if there's no drive, it might be a special path (eg, a UNC path)
+	{
+		if($path.contains('::')) # if it's a special path, get the provider's path name
+		{
+			$path = $pathObj.ProviderPath
+		}
+		if($path -match "^\\\\([^\\]+)\\") # if it's a UNC path, use the server name as the drive
+		{
+			$drive = $matches[1]
+		}
+	}
+
+	$local:title = $path
+	if($WindowTitle) { $title += " - $WindowTitle" }
+
+	$host.ui.rawUi.windowTitle = $title
+	$path = [IO.Path]::GetFileName($path)
+	if(!$path) { $path = '\' }
+
+	if($NestedPromptLevel)
+	{
+		Write-Host -NoNewline -ForeGroundColor Green "$NestedPromptLevel-";
+	}
+
+	$private:h = @(Get-History);
+	$private:nextCommand = $private:h[$private:h.Count - 1].Id + 1;
+	Write-Host -NoNewline -ForeGroundColor Red "${private:nextCommand}|";
+
+	Write-Host -NoNewline -ForeGroundColor Cyan "${drive}";
+	Write-Host -NoNewline -ForeGroundColor White ":";
+	Write-Host -NoNewline -ForeGroundColor White "$path";
+
+	# Show GIT Status, if loaded:
+	if (Get-Command "Write-VcsStatus" -ErrorAction SilentlyContinue)
+	{
+		$realLASTEXITCODE = $LASTEXITCODE
+		Write-VcsStatus
+		$global:LASTEXITCODE = $realLASTEXITCODE
+	}
+
+	return ">";
+}
+
+# ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
+
+# starts a new execution scope
+function Start-NewScope
+{
+	param($Prompt = $null) Write-Host "Starting New Scope"
+	if ($Prompt -ne $null)
+	{
+		if ($Prompt -is [ScriptBlock])
+		{
+			$null = New-Item function:Prompt -Value $Prompt -force
+		}
+		else
+		{
+			function Prompt {"$Prompt"}
+		}
+	}
+	$host.EnterNestedPrompt()
+}
+
+# 'cause shutdown commands are too long and hard to type...
+function Restart
+{
+	shutdown /r /t 1
+}
+
+# --------------------------------------------------------------------------
+# EXO Helpers
+# --------------------------------------------------------------------------
+
+function dev($project)
+{
+	cd "$(get-content Env:INETROOT)\sources\dev\$project"
+}
+
+function test($project)
+{
+	cd "$(get-content Env:INETROOT)\sources\test\$project"
+}
+
+function bcc
+{
+	build -Cc
+}
