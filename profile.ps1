@@ -119,6 +119,13 @@ function prompt
 		$global:LASTEXITCODE = $realLASTEXITCODE
 	}
 
+    $txtRight = "[$(get-date)]`n"
+    $startposx = $Host.UI.RawUI.windowsize.width - $txtRight.length
+    $startposy = $Host.UI.RawUI.CursorPosition.Y
+    $Host.UI.RawUI.CursorPosition = New-Object System.Management.Automation.Host.Coordinates $startposx,$startposy
+    $host.UI.RawUI.ForegroundColor = "White"
+    $Host.UI.Write($txtRight)
+
 	return ">";
 }
 
