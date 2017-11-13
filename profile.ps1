@@ -57,6 +57,7 @@ set-alias unset      remove-variable
 set-alias mo         measure-object
 set-alias eval       invoke-expression
 Set-Alias touch 	 Update-File
+Set-Alias sudo 		 Elevate-Process
 set-alias n          code
 set-alias vi         code
 
@@ -180,5 +181,21 @@ Function Update-File {
         Write-Output $null > $file
     }
 }
+
+
+function Elevate-Process
+{
+<#
+.SYNOPSIS
+  Runs a process as administrator. Stolen from http://weestro.blogspot.com/2009/08/sudo-for-powershell.html.
+#>
+    $file, [string]$arguments = $args
+    $psi = New-Object System.Diagnostics.ProcessStartInfo $file
+    $psi.Arguments = $arguments
+    $psi.Verb = "runas"
+    $psi.WorkingDirectory = Get-Location
+    [System.Diagnostics.Process]::Start($psi) | Out-Null
+}
+
 
 
