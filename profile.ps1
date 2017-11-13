@@ -65,6 +65,7 @@ Import-Module Profile
 set-alias unset      remove-variable
 set-alias mo         measure-object
 set-alias eval       invoke-expression
+Set-Alias touch 	 Update-File
 set-alias n          code
 set-alias vi         code
 
@@ -171,7 +172,22 @@ function test($project)
 	cd "$(get-content Env:INETROOT)\sources\test\$project"
 }
 
-function bcc
-{
-	build -Cc
+function bcc {
+    build -Cc
 }
+
+Function Update-File {
+    $file = $args[0]
+    if ($file -eq $null) {
+        throw "No filename supplied"
+    }
+
+    if (Test-Path $file) {
+        (Get-ChildItem $file).LastWriteTime = Get-Date
+    }
+    else {
+        Write-Output $null > $file
+    }
+}
+
+
