@@ -178,7 +178,7 @@ Function Update-File {
         (Get-ChildItem $file).LastWriteTime = Get-Date
     }
     else {
-        Write-Output $null > $file
+        Out-File $file -Encoding ASCII
     }
 }
 
