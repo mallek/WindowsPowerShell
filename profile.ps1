@@ -61,6 +61,13 @@ Set-Alias sudo 		 Elevate-Process
 set-alias n          code
 set-alias vi         code
 
+#Remap ls to show hidden folders
+Remove-Item alias:ls
+function ls () {
+	Get-ChildItem -Force @args
+}
+
+
 # ---------------------------------------------------------------------------
 # Visuals
 # ---------------------------------------------------------------------------
