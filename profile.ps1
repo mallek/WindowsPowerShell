@@ -10,6 +10,19 @@ $MaximumHistoryCount = 512
 $FormatEnumerationLimit = 100
 
 # ---------------------------------------------------------------------------
+# Path
+# ---------------------------------------------------------------------------
+$vsPath = 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\'
+
+#Temporarily add visual studio to the path, This will only persist in this powershell
+#check if folder exists and directory isn't already in the path
+if ((Test-Path $vsPath) -And (!$env:Path.Contains($vsPath))) {
+    $env:Path += ';' + $vsPath;
+}
+
+remove-variable vsPath;
+
+# ---------------------------------------------------------------------------
 # Modules
 # ---------------------------------------------------------------------------
 
@@ -56,17 +69,17 @@ Import-Module Profile
 set-alias unset      remove-variable
 set-alias mo         measure-object
 set-alias eval       invoke-expression
-Set-Alias touch 	 Update-File
-Set-Alias sudo 		 Elevate-Process
+Set-Alias touch      Update-File
+Set-Alias sudo       Elevate-Process
 set-alias n          code
 set-alias vi         code
+Set-Alias vs         devenv.exe
 
 #Remap ls to show hidden folders
 Remove-Item alias:ls
 function ls () {
 	Get-ChildItem -Force @args
 }
-
 
 # ---------------------------------------------------------------------------
 # Visuals
@@ -133,6 +146,41 @@ function prompt
 # Helper functions
 # ---------------------------------------------------------------------------
 
+
+Function Update-File {
+	<#
+.SYNOPSIS
+  Used for touch alias, output file is ascii encoded (useful for Update-File .gitignore)
+#>
+    $file = $args[0]
+    if ($file -eq $null) {
+        throw "No filename supplied"
+    }
+
+    if (Test-Path $file) {
+        (Get-ChildItem $file).LastWriteTime = Get-Date
+    }
+    else {
+        Out-File $file -Encoding ASCII
+    }
+}
+
+
+function Elevate-Process
+{
+<#
+.SYNOPSIS
+  Used for sudo alias
+  Runs a process as administrator. Stolen from http://weestro.blogspot.com/2009/08/sudo-for-powershell.html.
+#>
+    $file, [string]$arguments = $args
+    $psi = New-Object System.Diagnostics.ProcessStartInfo $file
+    $psi.Arguments = $arguments
+    $psi.Verb = "runas"
+    $psi.WorkingDirectory = Get-Location
+    [System.Diagnostics.Process]::Start($psi) | Out-Null
+}
+
 # starts a new execution scope
 function Start-NewScope
 {
@@ -175,34 +223,12 @@ function bcc {
     build -Cc
 }
 
-Function Update-File {
-    $file = $args[0]
-    if ($file -eq $null) {
-        throw "No filename supplied"
-    }
 
-    if (Test-Path $file) {
-        (Get-ChildItem $file).LastWriteTime = Get-Date
-    }
-    else {
-        Out-File $file -Encoding ASCII
-    }
-}
+# --------------------------------------------------------------------------
+# Cleanup
+# --------------------------------------------------------------------------
 
 
-function Elevate-Process
-{
-<#
-.SYNOPSIS
-  Runs a process as administrator. Stolen from http://weestro.blogspot.com/2009/08/sudo-for-powershell.html.
-#>
-    $file, [string]$arguments = $args
-    $psi = New-Object System.Diagnostics.ProcessStartInfo $file
-    $psi.Arguments = $arguments
-    $psi.Verb = "runas"
-    $psi.WorkingDirectory = Get-Location
-    [System.Diagnostics.Process]::Start($psi) | Out-Null
-}
 
 
 
