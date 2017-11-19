@@ -1,3 +1,7 @@
+if (Get-Module NuGet) {
+	Exit
+}
+
 # ---------------------------------------------------------------------------
 # Settings
 # ---------------------------------------------------------------------------
@@ -62,6 +66,9 @@ Import-Module Posh-Git
 # Colorize directory output
 Import-Module PSColor
 
+#Write-Ascii
+Import-Module Write-Ascii
+
 # Utils
 Import-Module StreamUtils
 Import-Module StringUtils
@@ -73,13 +80,10 @@ Import-Module Profile
 set-alias unset      remove-variable
 set-alias mo         measure-object
 set-alias eval       invoke-expression
-Set-Alias touch      Update-File
-Set-Alias sudo       Set-ElevateProcess
+
 set-alias n          code
 set-alias vi         code
 Set-Alias vs         devenv.exe
-
-#git alias functions
 
 function which($cmd) { (Get-Command $cmd).Definition }
 
@@ -112,12 +116,31 @@ function prompt
 		}
 	}
 
-	$local:title = $path
-	if($WindowTitle) { $title += " - $WindowTitle" }
+	if (($PSVersionTable.PSVersion.Major -le 5) -or $IsWindows) {
+		$currentUser = [Security.Principal.WindowsPrincipal]([Security.Principal.WindowsIdentity]::GetCurrent())
+		$isAdminProcess = $currentUser.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+	}
+	else {
+		# Must be Linux or OSX, so use the id util. Root has userid of 0.
+		$isAdminProcess = 0 -eq (id -u)
+	}
 
-	$host.ui.rawUi.windowTitle = $title
-	$path = [IO.Path]::GetFileName($path)
-	if(!$path) { $path = '\' }
+	$adminHeader = if ($isAdminProcess) { 'Administrator: ' } else { '' }
+
+	$WindowTitleSupported = $true
+	if (Get-Module NuGet) {
+		$WindowTitleSupported = $false
+	}
+
+	if ($WindowTitleSupported) {
+		$local:title = "$adminHeader : $path"
+		if($WindowTitle) { $title += " - $WindowTitle" }
+
+		$host.ui.rawUi.windowTitle = $title
+		$path = [IO.Path]::GetFileName($path)
+		if(!$path) { $path = '\' }
+	}
+
 
 	if($NestedPromptLevel)
 	{

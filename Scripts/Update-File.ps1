@@ -15,3 +15,5 @@ Function Update-File {
         Out-File $file -Encoding ASCII
     }
 }
+
+Set-Alias touch      Update-File

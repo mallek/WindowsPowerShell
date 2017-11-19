@@ -13,3 +13,5 @@ function Set-ElevateProcess
     $psi.WorkingDirectory = Get-Location
     [System.Diagnostics.Process]::Start($psi) | Out-Null
 }
+
+Set-Alias sudo       Set-ElevateProcess
