@@ -1,9 +1,4 @@
 # ---------------------------------------------------------------------------
-# Banner
-# ---------------------------------------------------------------------------
-Invoke-Expression $psscriptroot\scripts\Banner.ps1
-
-# ---------------------------------------------------------------------------
 # Settings
 # ---------------------------------------------------------------------------
 $MaximumHistoryCount = 512
@@ -20,7 +15,16 @@ if ((Test-Path $vsPath) -And (!$env:Path.Contains($vsPath))) {
     $env:Path += ';' + $vsPath;
 }
 
-remove-variable vsPath;
+# ---------------------------------------------------------------------------
+# Scripts - Will call Banner
+# ---------------------------------------------------------------------------
+
+#Invoke-Expression $psscriptroot\scripts\Banner.ps1
+
+Resolve-Path $PSScriptRoot\Scripts\*.ps1 |
+Where-Object { -not ($_.ProviderPath.Contains(".Tests.")) } |
+    Foreach-Object { . $_.ProviderPath }
+
 
 # ---------------------------------------------------------------------------
 # Modules
@@ -70,10 +74,14 @@ set-alias unset      remove-variable
 set-alias mo         measure-object
 set-alias eval       invoke-expression
 Set-Alias touch      Update-File
-Set-Alias sudo       Elevate-Process
+Set-Alias sudo       Set-ElevateProcess
 set-alias n          code
 set-alias vi         code
 Set-Alias vs         devenv.exe
+
+#git alias functions
+
+function which($cmd) { (Get-Command $cmd).Definition }
 
 #Remap ls to show hidden folders
 Remove-Item alias:ls
@@ -146,41 +154,6 @@ function prompt
 # Helper functions
 # ---------------------------------------------------------------------------
 
-
-Function Update-File {
-	<#
-.SYNOPSIS
-  Used for touch alias, output file is ascii encoded (useful for Update-File .gitignore)
-#>
-    $file = $args[0]
-    if ($file -eq $null) {
-        throw "No filename supplied"
-    }
-
-    if (Test-Path $file) {
-        (Get-ChildItem $file).LastWriteTime = Get-Date
-    }
-    else {
-        Out-File $file -Encoding ASCII
-    }
-}
-
-
-function Elevate-Process
-{
-<#
-.SYNOPSIS
-  Used for sudo alias
-  Runs a process as administrator. Stolen from http://weestro.blogspot.com/2009/08/sudo-for-powershell.html.
-#>
-    $file, [string]$arguments = $args
-    $psi = New-Object System.Diagnostics.ProcessStartInfo $file
-    $psi.Arguments = $arguments
-    $psi.Verb = "runas"
-    $psi.WorkingDirectory = Get-Location
-    [System.Diagnostics.Process]::Start($psi) | Out-Null
-}
-
 # starts a new execution scope
 function Start-NewScope
 {
@@ -211,16 +184,12 @@ function Restart
 
 function dev($project)
 {
-	cd "$(get-content Env:INETROOT)\sources\dev\$project"
+	Set-Location "$(get-content Env:INETROOT)\sources\dev\$project"
 }
 
 function test($project)
 {
-	cd "$(get-content Env:INETROOT)\sources\test\$project"
-}
-
-function bcc {
-    build -Cc
+	Set-Location "$(get-content Env:INETROOT)\sources\test\$project"
 }
 
 
@@ -228,6 +197,7 @@ function bcc {
 # Cleanup
 # --------------------------------------------------------------------------
 
+remove-variable vsPath;
 
 
 
