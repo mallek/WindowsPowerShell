@@ -45,9 +45,9 @@ function Get-Hosts () {
         $c = Get-Content $filename
 
         foreach ($line in $c) {
-            $bits = [regex]::Split($line, "\t+")
-            if ($bits.count -eq 2) {
-                Write-Host $bits[0] `t`t $bits[1]
+            $bits = [regex]::Split($line, "^(\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b)\s+")
+            if ($bits.count -eq 3) {
+                Write-Host $bits[1] `t`t $bits[2]
             }
         }
     }
@@ -80,7 +80,7 @@ function Get-Hosts () {
     }
 }
 
-function Hosts () {
-    Get-Hosts $args
+function Hosts ($hostArgs) {
+    Get-Hosts $hostArgs
 }
 
