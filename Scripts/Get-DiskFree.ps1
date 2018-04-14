@@ -117,6 +117,6 @@ function Get-DiskFree
 }
 
 
-function Disk () {
-    Get-DiskFree -Format | ft -GroupBy Name -auto $args
+function Disk ($additionalArgs) {
+    Get-DiskFree -Format | Format-Table -GroupBy Name -auto $additionalArgs
 }
