@@ -12,11 +12,16 @@ $FormatEnumerationLimit = 100
 # Path
 # ---------------------------------------------------------------------------
 $vsPath = 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\'
+$krakenPath = $env:LOCALAPPDATA + '\gitkraken\app-3.4.0\'
 
 #Temporarily add visual studio to the path, This will only persist in this powershell
 #check if folder exists and directory isn't already in the path
 if ((Test-Path $vsPath) -And (!$env:Path.Contains($vsPath))) {
     $env:Path += ';' + $vsPath;
+}
+
+if ((Test-Path $krakenPath) -And (!$env:Path.Contains($krakenPath))) {
+	 $env:Path += ';' + $krakenPath;
 }
 
 # ---------------------------------------------------------------------------
@@ -87,6 +92,8 @@ Set-Alias vs         devenv.exe
 
 
 function which($cmd) { (Get-Command $cmd).Definition }
+
+function kraken() { gitkraken.exe -p $args }
 
 #Remap ls to show hidden folders
 Remove-Item alias:ls
