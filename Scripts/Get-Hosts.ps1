@@ -5,12 +5,13 @@
 # - does not handle entries with comments afterwards ("<ip>    <host>    # comment")
 #
 
-function Get-Hosts () {
-	<#
+function Get-Hosts ($hostArgsIn) {
+    <#
 .SYNOPSIS
   Powershell script for adding/removing/showing entries to the hosts file.
 #>
 
+    $hostArgs = $bits = [regex]::Split($hostArgsIn, "\t+")
 
     $file = "C:\Windows\System32\drivers\etc\hosts"
 
@@ -29,7 +30,8 @@ function Get-Hosts () {
                 if ($bits[1] -ne $hostname) {
                     $newLines += $line
                 }
-            } else {
+            }
+            else {
                 $newLines += $line
             }
         }
@@ -52,31 +54,44 @@ function Get-Hosts () {
         }
     }
 
+    function open-hosts([string]$filename) {
+        n $filename
+    }
+
     try {
-        if ($args[0] -eq "add") {
+        if ($hostArgs[0] -eq "add") {
 
             if ($args.count -lt 3) {
                 throw "Not enough arguments for add."
-            } else {
-                add-host $file $args[1] $args[2]
+            }
+            else {
+                add-host $file $hostArgs[1] $hostArgs[2]
             }
 
-        } elseif ($args[0] -eq "remove") {
-
-            if ($args.count -lt 2) {
-                throw "Not enough arguments for remove."
-            } else {
-                remove-host $file $args[1]
-            }
-
-        } elseif ($args[0] -eq "show") {
-            print-hosts $file
-        } else {
-            throw "Invalid operation '" + $args[0] + "' - must be one of 'add', 'remove', 'show'."
         }
-    } catch  {
+        elseif ($hostArgs[0] -eq "remove") {
+
+            if ($hostArgs.count -lt 2) {
+                throw "Not enough arguments for remove."
+            }
+            else {
+                remove-host $file $hostArgs[1]
+            }
+
+        }
+        elseif ($hostArgs[0] -eq "show") {
+            print-hosts $file
+        }
+        elseif ($hostArgs[0] -eq "open") {
+            open-hosts $file
+        }
+        else {
+            throw "Invalid operation '" + $hostArgs[0] + "' - must be one of 'add', 'remove', 'show', 'open'."
+        }
+    }
+    catch {
         Write-Host $error[0]
-        Write-Host "`nUsage: hosts add <ip> <hostname>`n       hosts remove <hostname>`n       hosts show"
+        Write-Host "`nUsage: hosts add <ip> <hostname>`n       hosts remove <hostname>`n       hosts show`n       hosts open"
     }
 }
 
