@@ -12,16 +12,12 @@ $FormatEnumerationLimit = 100
 # Path
 # ---------------------------------------------------------------------------
 $vsPath = 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\'
-$krakenPath = $env:LOCALAPPDATA + '\gitkraken\app-3.4.0\'
+
 
 #Temporarily add visual studio to the path, This will only persist in this powershell
 #check if folder exists and directory isn't already in the path
 if ((Test-Path $vsPath) -And (!$env:Path.Contains($vsPath))) {
     $env:Path += ';' + $vsPath;
-}
-
-if ((Test-Path $krakenPath) -And (!$env:Path.Contains($krakenPath))) {
-	 $env:Path += ';' + $krakenPath;
 }
 
 # ---------------------------------------------------------------------------
@@ -89,11 +85,9 @@ set-alias eval       invoke-expression
 set-alias n          code
 set-alias vi         code
 Set-Alias vs         devenv.exe
-
+Set-Alias krak		 kraken
 
 function which($cmd) { (Get-Command $cmd).Definition }
-
-function kraken() { gitkraken.exe -p $args }
 
 #Remap ls to show hidden folders
 Remove-Item alias:ls
@@ -223,6 +217,17 @@ function test($project)
 	Set-Location "$(get-content Env:INETROOT)\sources\test\$project"
 }
 
+# --------------------------------------------------------------------------
+# GitKraken Helpers
+# --------------------------------------------------------------------------
+
+function kraken() {
+	$curpath = (get-location).ProviderPath
+	$lapd = $env:localappdata
+	$logf = "$env:temp\krakstart.log"
+	$newestExe =  Get-Item "$lapd\gitkraken\app-*\gitkraken.exe" | Select-Object -Last 1
+	start-process -filepath   $newestExe -ArgumentList "--path $curpath" -redirectstandardoutput $logf
+  }
 
 # --------------------------------------------------------------------------
 # Cleanup
