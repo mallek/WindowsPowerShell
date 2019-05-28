@@ -11,7 +11,7 @@ $FormatEnumerationLimit = 100
 # ---------------------------------------------------------------------------
 # Path
 # ---------------------------------------------------------------------------
-$vsPath = 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\'
+$vsPath = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\'
 
 
 #Temporarily add visual studio to the path, This will only persist in this powershell
