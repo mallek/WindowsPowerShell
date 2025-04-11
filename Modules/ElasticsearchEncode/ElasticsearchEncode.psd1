@@ -6,16 +6,16 @@
     ModuleVersion = '1.0.0'
 
     # ID used to uniquely identify this module
-    GUID = '00000000-0000-0000-0000-000000000000'
+    GUID = 'e35b822b-5790-4525-9ea5-a0b915e590a7'
 
     # Author of this module
-    Author = 'Your Name'
+    Author = 'Travis Haley'
 
     # Company or vendor of this module
-    CompanyName = 'Your Company'
+    CompanyName = 'Haley Computer Solutions'
 
     # Copyright statement for this module
-    Copyright = '(c) 2024. All rights reserved.'
+    Copyright = '(c) 2024 Haley Computer Solutions. All rights reserved.'
 
     # Description of the functionality provided by this module
     Description = 'Module for generating and testing Elasticsearch API key headers'

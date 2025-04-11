@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     This function generates an Elasticsearch API key header by encoding the ID:Key pair and optionally tests 
-    the connection to an Elasticsearch server. It can also copy the generated header to the clipboard.
+    the connection to an Elasticsearch server. It can also copy the generated authorization header to the clipboard.
 
 .PARAMETER Url
     (Optional) The Elasticsearch server URL to test the connection. If not provided, the user will be prompted.
@@ -21,7 +21,7 @@
     Generates the header, copies it to the clipboard, and tests the connection.
 
 .NOTES
-    Author: Your Name
+    Author: Travis Haley
     Version: 1.1.0
 #>
 function Generate-Elastic-Key {
@@ -30,6 +30,10 @@ function Generate-Elastic-Key {
         [string]$Url,
         [switch]$CopyToClipboard
     )
+
+    # Define status symbols using PowerShell's native character support
+    $successSymbol = [char]0x2714  # ✓
+    $failureSymbol = [char]0x2718  # ✘
 
     # Prompt for URL if not provided
     if (-not $Url) {
@@ -61,7 +65,7 @@ function Generate-Elastic-Key {
     # Optional: copy to clipboard
     if ($CopyToClipboard) {
         Set-Clipboard -Value $authHeader
-        Write-Host "`n(Header copied to clipboard ✅)"
+        Write-Host "`n(Header copied to clipboard $successSymbol)"
     }
 
     # Test the connection only if URL was provided
@@ -69,11 +73,11 @@ function Generate-Elastic-Key {
         Write-Host "`nTesting connection to $Url ..."
         try {
             $response = Invoke-RestMethod -Uri $Url -Headers $headers -Method Get -ErrorAction Stop
-            Write-Host "`n✅ Connection successful. Cluster Info:"
+            Write-Host "`n$successSymbol Connection successful. Cluster Info:"
             $response
         }
         catch {
-            Write-Host "`n❌ Connection failed:"
+            Write-Host "`n$failureSymbol Connection failed:"
             $_.Exception.Message
             if ($_.ErrorDetails) {
                 Write-Host $_.ErrorDetails.Message

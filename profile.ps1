@@ -91,9 +91,17 @@ Set-Alias krak		 kraken
 function which($cmd) { (Get-Command $cmd).Definition }
 
 #Remap ls to show hidden folders
-Remove-Item alias:ls
+if (Test-Path alias:ls) {
+    Remove-Item alias:ls
+}
 function ls () {
 	Get-ChildItem -Force @args
+}
+
+# Profile reload function
+function source {
+    . "$HOME\Documents\WindowsPowerShell\profile.ps1"
+    Write-Host "Profile reloaded successfully" -ForegroundColor Green
 }
 
 # ---------------------------------------------------------------------------
