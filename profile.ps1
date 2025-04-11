@@ -7,6 +7,7 @@ if (Get-Module NuGet) {
 # ---------------------------------------------------------------------------
 $MaximumHistoryCount = 512
 $FormatEnumerationLimit = 100
+$env:ASPNETCORE_ENVIRONMENT='Local'
 
 # ---------------------------------------------------------------------------
 # Path
