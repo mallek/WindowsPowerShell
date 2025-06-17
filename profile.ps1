@@ -76,6 +76,9 @@ Import-Module StreamUtils
 Import-Module StringUtils
 Import-Module Profile
 
+# PR Review Tools
+Import-Module PRReview
+
 # ---------------------------------------------------------------------------
 # Custom Aliases
 # ---------------------------------------------------------------------------
