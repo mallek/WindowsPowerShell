@@ -3,7 +3,7 @@
     RootModule = 'AICommand.psm1'
 
     # Version number of this module.
-    ModuleVersion = '1.0.0'
+    ModuleVersion = '1.1.0'
 
     # ID used to uniquely identify this module
     GUID = 'a3f1c4d7-8e2b-4f9a-b5c6-1d8e7f2a9b3c'
@@ -53,6 +53,12 @@
 
             # ReleaseNotes of this module
             ReleaseNotes = @'
+Version 1.1.0
+- Added GitHub Copilot CLI as a provider option
+- Fixed PowerShell syntax generation (proper use of ; vs && based on PS version)
+- Enhanced AI prompt to explicitly request PowerShell-native commands
+- Updated documentation with Copilot examples and PowerShell syntax guide
+
 Version 1.0.0 (Initial Release)
 - AI-powered command generation from natural language
 - Support for multiple AI providers (Claude, OpenAI, Anthropic, Ollama)

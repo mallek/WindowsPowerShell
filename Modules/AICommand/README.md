@@ -25,21 +25,33 @@ The AICommand module brings AI-powered command generation to PowerShell, allowin
 
 ## Prerequisites
 
-### Claude CLI (Recommended)
+### Claude Code CLI (Default)
+
+This is the Claude CLI that comes with Claude Code IDE integration.
 
 ```powershell
-# Install via npm
-npm install -g @anthropic-ai/claude-cli
-
-# Configure with your API key
-claude configure
+# Usually installed automatically with Claude Code
+# Check if available:
+Get-Command claude
 ```
 
 ### Alternative Providers
 
+- **GitHub Copilot** (Recommended if you have GitHub Copilot):
+  ```powershell
+  # Install GitHub CLI first (if not already installed)
+  winget install GitHub.cli
+
+  # Authenticate
+  gh auth login
+
+  # Install Copilot extension
+  gh extension install github/gh-copilot
+  ```
+
 - **OpenAI**: `pip install openai-cli`
 - **Anthropic**: `pip install anthropic-cli`
-- **Ollama**: [Download from ollama.ai](https://ollama.ai/download)
+- **Ollama** (Local, free): [Download from ollama.ai](https://ollama.ai/download)
 
 ## Installation
 
@@ -122,11 +134,14 @@ Session commands:
 ### Advanced Options
 
 ```powershell
-# Use a specific AI provider
-?? -Provider openai list all docker containers
+# Use GitHub Copilot
+?? -Provider copilot list all docker containers
+
+# Use Ollama (local)
+?? -Provider ollama list all running processes
 
 # Use a specific model
-?? -Model claude-3-5-sonnet-20241022 optimize this query
+?? -Provider copilot -Model gpt-5 optimize this query
 
 # Get detailed output
 ?? -Verbose find large files over 100MB
@@ -253,8 +268,8 @@ Generate commands from natural language descriptions.
 
 **Parameters:**
 - `Prompt` - What you want to accomplish (positional, required)
-- `Provider` - AI provider: claude, openai, anthropic, ollama (default: claude)
-- `Model` - Specific model to use
+- `Provider` - AI provider: claude, copilot, openai, anthropic, ollama (default: claude)
+- `Model` - Specific model to use (provider-specific, e.g., 'gpt-5' for copilot)
 - `Execute` - Run command immediately
 - `Copy` - Copy to clipboard silently
 - `Interactive` - Replace prompt text (experimental)
@@ -292,6 +307,12 @@ The module uses sensible defaults but can be customized:
 Edit the module or create a wrapper function in your profile:
 
 ```powershell
+# Use GitHub Copilot by default
+function ?? {
+    Invoke-AICommand -Provider copilot @args
+}
+
+# Or use Ollama (local, free)
 function ?? {
     Invoke-AICommand -Provider ollama @args
 }

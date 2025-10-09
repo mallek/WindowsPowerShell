@@ -76,7 +76,7 @@ function Invoke-AICommand {
         [string[]]$Prompt,
 
         [Parameter()]
-        [ValidateSet('claude', 'openai', 'anthropic', 'ollama')]
+        [ValidateSet('claude', 'openai', 'anthropic', 'ollama', 'copilot')]
         [string]$Provider = 'claude',
 
         [Parameter()]
@@ -106,7 +106,7 @@ function Invoke-AICommand {
         Write-Host "  -Execute          Automatically run the generated command" -ForegroundColor Gray
         Write-Host "  -Copy             Copy command to clipboard" -ForegroundColor Gray
         Write-Host "  -Interactive      Use interactive mode (experimental)" -ForegroundColor Gray
-        Write-Host "  -Provider <name>  Use specific AI provider (claude|openai|anthropic|ollama)" -ForegroundColor Gray
+        Write-Host "  -Provider <name>  Use specific AI provider (claude|openai|anthropic|ollama|copilot)" -ForegroundColor Gray
         Write-Host "  -Model <name>     Use specific model" -ForegroundColor Gray
         return
     }
@@ -130,6 +130,10 @@ function Invoke-AICommand {
             }
             'ollama' {
                 Write-Host "  Visit: https://ollama.ai/download" -ForegroundColor Cyan
+            }
+            'copilot' {
+                Write-Host "  GitHub CLI: gh auth login" -ForegroundColor Cyan
+                Write-Host "  Copilot: gh extension install github/gh-copilot" -ForegroundColor Cyan
             }
         }
         return
@@ -218,6 +222,7 @@ function Get-ProviderCommand {
         'openai'     = 'openai'
         'anthropic'  = 'anthropic'
         'ollama'     = 'ollama'
+        'copilot'    = 'copilot'
     }
 
     $commandName = $commands[$Provider]
@@ -303,6 +308,23 @@ function Invoke-ProviderCommand {
             $args += $Prompt
 
             $output = & ollama @args 2>&1 | Out-String
+        }
+        'copilot' {
+            # Use GitHub Copilot CLI
+            try {
+                $args = @('--allow-all-tools', '-p')
+
+                if ($Model) {
+                    $args = @('--model', $Model) + $args
+                }
+
+                # Add the prompt as the last argument
+                $args += $Prompt
+
+                $output = & copilot @args 2>&1 | Out-String
+            } catch {
+                throw "Failed to invoke GitHub Copilot CLI: $($_.Exception.Message). Make sure gh-copilot extension is installed."
+            }
         }
         default {
             throw "Unsupported provider: $Provider"
@@ -467,7 +489,7 @@ function Start-AICommandSession {
     [Alias('??!')]
     param(
         [Parameter()]
-        [ValidateSet('claude', 'openai', 'anthropic', 'ollama')]
+        [ValidateSet('claude', 'openai', 'anthropic', 'ollama', 'copilot')]
         [string]$Provider = 'claude'
     )
 
