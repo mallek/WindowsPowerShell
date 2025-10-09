@@ -79,6 +79,9 @@ Import-Module Profile
 # PR Review Tools
 Import-Module PRReview
 
+# AI Command Generator
+Import-Module AICommand
+
 # ---------------------------------------------------------------------------
 # Custom Aliases
 # ---------------------------------------------------------------------------
