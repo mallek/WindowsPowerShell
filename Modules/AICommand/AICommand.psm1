@@ -4,6 +4,9 @@
 # Description: AI-powered CLI command generation using Claude or other LLMs
 #
 
+# Configuration file path
+$script:ConfigPath = Join-Path $env:USERPROFILE ".aicommand.config.json"
+
 <#
 .SYNOPSIS
     Generate CLI commands using AI assistance with prompt replacement.
@@ -77,7 +80,7 @@ function Invoke-AICommand {
 
         [Parameter()]
         [ValidateSet('claude', 'openai', 'anthropic', 'ollama', 'copilot')]
-        [string]$Provider = 'claude',
+        [string]$Provider,
 
         [Parameter()]
         [string]$Model,
@@ -94,6 +97,18 @@ function Invoke-AICommand {
         [Parameter()]
         [bool]$SystemContext = $true
     )
+
+    # Load configuration defaults
+    $config = Get-AICommandConfig
+
+    # Use config defaults if parameters not explicitly provided
+    if (-not $PSBoundParameters.ContainsKey('Provider')) {
+        $Provider = $config.Provider
+    }
+
+    if (-not $PSBoundParameters.ContainsKey('Model') -and $config.Model) {
+        $Model = $config.Model
+    }
 
     # Join prompt arguments into a single string
     $promptText = $Prompt -join ' '
@@ -490,8 +505,16 @@ function Start-AICommandSession {
     param(
         [Parameter()]
         [ValidateSet('claude', 'openai', 'anthropic', 'ollama', 'copilot')]
-        [string]$Provider = 'claude'
+        [string]$Provider
     )
+
+    # Load configuration defaults
+    $config = Get-AICommandConfig
+
+    # Use config default if provider not explicitly provided
+    if (-not $PSBoundParameters.ContainsKey('Provider')) {
+        $Provider = $config.Provider
+    }
 
     Write-Host "Starting AI Command Session with $Provider..." -ForegroundColor Green
     Write-Host "Type 'exit' or 'quit' to end the session" -ForegroundColor DarkGray
@@ -540,5 +563,137 @@ function Start-AICommandSession {
     }
 }
 
+<#
+.SYNOPSIS
+    Get the current AICommand configuration.
+
+.DESCRIPTION
+    Retrieves the stored configuration for default provider and model settings.
+    If no config file exists, returns default values.
+
+.EXAMPLE
+    Get-AICommandConfig
+    # Returns current configuration
+
+.EXAMPLE
+    $config = Get-AICommandConfig
+    Write-Host "Current provider: $($config.Provider)"
+#>
+function Get-AICommandConfig {
+    [CmdletBinding()]
+    param()
+
+    $defaultConfig = @{
+        Provider = 'claude'
+        Model = $null
+    }
+
+    if (Test-Path $script:ConfigPath) {
+        try {
+            $configJson = Get-Content $script:ConfigPath -Raw -ErrorAction Stop
+            $config = $configJson | ConvertFrom-Json
+
+            # Convert PSCustomObject to hashtable
+            $configHash = @{
+                Provider = if ($config.Provider) { $config.Provider } else { $defaultConfig.Provider }
+                Model = $config.Model
+            }
+
+            return $configHash
+        } catch {
+            Write-Warning "Failed to load config file. Using defaults. Error: $($_.Exception.Message)"
+            return $defaultConfig
+        }
+    }
+
+    return $defaultConfig
+}
+
+<#
+.SYNOPSIS
+    Set default provider and/or model for AICommand.
+
+.DESCRIPTION
+    Saves default provider and model preferences to a config file.
+    These defaults will be used when no explicit provider/model is specified.
+
+.PARAMETER Provider
+    The default AI provider to use (claude, openai, anthropic, ollama, copilot).
+
+.PARAMETER Model
+    The default model to use for the provider.
+
+.PARAMETER Clear
+    Clear the configuration file and reset to defaults.
+
+.EXAMPLE
+    Set-AICommandConfig -Provider copilot
+    # Set GitHub Copilot as default provider
+
+.EXAMPLE
+    Set-AICommandConfig -Provider copilot -Model gpt-4
+    # Set Copilot with GPT-4 as defaults
+
+.EXAMPLE
+    Set-AICommandConfig -Provider ollama -Model llama2
+    # Set Ollama with llama2 as defaults
+
+.EXAMPLE
+    Set-AICommandConfig -Clear
+    # Reset to default configuration
+#>
+function Set-AICommandConfig {
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [ValidateSet('claude', 'openai', 'anthropic', 'ollama', 'copilot')]
+        [string]$Provider,
+
+        [Parameter()]
+        [string]$Model,
+
+        [Parameter()]
+        [switch]$Clear
+    )
+
+    if ($Clear) {
+        if (Test-Path $script:ConfigPath) {
+            Remove-Item $script:ConfigPath -Force
+            Write-Host "AICommand configuration cleared. Using defaults (Provider: claude)." -ForegroundColor Green
+        } else {
+            Write-Host "No configuration file found. Already using defaults." -ForegroundColor Yellow
+        }
+        return
+    }
+
+    # Load existing config or create new one
+    $config = Get-AICommandConfig
+
+    # Update only the provided parameters
+    if ($PSBoundParameters.ContainsKey('Provider')) {
+        $config.Provider = $Provider
+    }
+
+    if ($PSBoundParameters.ContainsKey('Model')) {
+        $config.Model = $Model
+    }
+
+    # Save to file
+    try {
+        $config | ConvertTo-Json | Set-Content -Path $script:ConfigPath -Force
+        Write-Host "AICommand configuration saved:" -ForegroundColor Green
+        Write-Host "  Provider: $($config.Provider)" -ForegroundColor Cyan
+        if ($config.Model) {
+            Write-Host "  Model: $($config.Model)" -ForegroundColor Cyan
+        } else {
+            Write-Host "  Model: (provider default)" -ForegroundColor DarkGray
+        }
+        Write-Host ""
+        Write-Host "Config file: $script:ConfigPath" -ForegroundColor DarkGray
+    } catch {
+        Write-Error "Failed to save configuration: $($_.Exception.Message)"
+    }
+}
+
 # Export functions and aliases
-Export-ModuleMember -Function Invoke-AICommand, Start-AICommandSession, Get-SystemContext -Alias '??', '??!'
+Export-ModuleMember -Function Invoke-AICommand, Start-AICommandSession, Get-SystemContext, Get-AICommandConfig, Set-AICommandConfig -Alias '??', '??!'

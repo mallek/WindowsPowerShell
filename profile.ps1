@@ -70,6 +70,7 @@ Import-Module PSColor
 
 #Write-Ascii
 Import-Module Write-Ascii
+Write-Ascii "Hello Travis"
 
 # Utils
 Import-Module StreamUtils

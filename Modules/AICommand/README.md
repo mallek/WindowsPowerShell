@@ -298,13 +298,118 @@ Get-SystemContext
 # Available npm scripts: start, test, build, dev
 ```
 
+### `Set-AICommandConfig`
+
+Configure default provider and model preferences.
+
+**Parameters:**
+- `Provider` - Default AI provider: claude, copilot, openai, anthropic, ollama
+- `Model` - Default model name (optional, provider-specific)
+- `Clear` - Reset configuration to defaults
+
+**Examples:**
+```powershell
+# Set default provider
+Set-AICommandConfig -Provider copilot
+
+# Set provider with specific model
+Set-AICommandConfig -Provider copilot -Model gpt-4
+
+# Update just the model (keeps existing provider)
+Set-AICommandConfig -Model claude-3-5-sonnet-20241022
+
+# Reset to defaults
+Set-AICommandConfig -Clear
+```
+
+### `Get-AICommandConfig`
+
+View current configuration settings.
+
+**Returns:** Hashtable with Provider and Model keys
+
+**Examples:**
+```powershell
+# Display current config
+Get-AICommandConfig
+
+# Use in scripts
+$config = Get-AICommandConfig
+if ($config.Provider -eq 'ollama') {
+    Write-Host "Using local Ollama provider"
+}
+```
+
 ## Configuration
 
-The module uses sensible defaults but can be customized:
+The module provides a built-in configuration system to set default provider and model preferences. This eliminates the need to type `-Provider` and `-Model` flags every time.
 
-### Default Provider
+### Setting Default Provider and Model
 
-Edit the module or create a wrapper function in your profile:
+Use `Set-AICommandConfig` to configure your defaults:
+
+```powershell
+# Set GitHub Copilot as default provider
+Set-AICommandConfig -Provider copilot
+
+# Set Copilot with a specific model
+Set-AICommandConfig -Provider copilot -Model gpt-4
+
+# Set Ollama with llama2 as defaults
+Set-AICommandConfig -Provider ollama -Model llama2
+
+# Set Claude with a specific model
+Set-AICommandConfig -Provider claude -Model claude-3-5-sonnet-20241022
+```
+
+After setting defaults, you can use `??` without flags:
+
+```powershell
+# Uses your configured default provider/model
+?? create git branch for feature-123
+
+# Override for a single command if needed
+?? -Provider claude list all docker containers
+```
+
+### Viewing Current Configuration
+
+Check your current settings:
+
+```powershell
+Get-AICommandConfig
+# Returns:
+# Provider: copilot
+# Model: gpt-4
+```
+
+Or inline:
+
+```powershell
+$config = Get-AICommandConfig
+Write-Host "Using provider: $($config.Provider)"
+```
+
+### Resetting to Defaults
+
+Clear your configuration and return to built-in defaults (claude):
+
+```powershell
+Set-AICommandConfig -Clear
+```
+
+### Configuration File Location
+
+Settings are stored in a JSON file at:
+```
+C:\Users\<username>\.aicommand.config.json
+```
+
+You can manually edit this file if needed, but using `Set-AICommandConfig` is recommended.
+
+### Legacy Configuration (Alternative Method)
+
+You can also create a wrapper function in your profile for customization:
 
 ```powershell
 # Use GitHub Copilot by default
@@ -317,6 +422,8 @@ function ?? {
     Invoke-AICommand -Provider ollama @args
 }
 ```
+
+**Note:** The built-in configuration system (`Set-AICommandConfig`) is the preferred method as it doesn't require profile modifications.
 
 ### Disable System Context
 

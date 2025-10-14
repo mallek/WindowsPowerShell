@@ -3,7 +3,7 @@
     RootModule = 'AICommand.psm1'
 
     # Version number of this module.
-    ModuleVersion = '1.1.0'
+    ModuleVersion = '1.2.0'
 
     # ID used to uniquely identify this module
     GUID = 'a3f1c4d7-8e2b-4f9a-b5c6-1d8e7f2a9b3c'
@@ -27,7 +27,9 @@
     FunctionsToExport = @(
         'Invoke-AICommand',
         'Start-AICommandSession',
-        'Get-SystemContext'
+        'Get-SystemContext',
+        'Get-AICommandConfig',
+        'Set-AICommandConfig'
     )
 
     # Cmdlets to export from this module
@@ -53,6 +55,13 @@
 
             # ReleaseNotes of this module
             ReleaseNotes = @'
+Version 1.2.0
+- Added configuration system for default provider and model settings
+- New functions: Set-AICommandConfig and Get-AICommandConfig
+- Users can now set defaults to avoid typing flags every time
+- Config stored in ~/.aicommand.config.json
+- Example: Set-AICommandConfig -Provider copilot -Model gpt-4
+
 Version 1.1.0
 - Added GitHub Copilot CLI as a provider option
 - Fixed PowerShell syntax generation (proper use of ; vs && based on PS version)
